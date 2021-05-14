@@ -18,4 +18,28 @@ export class NotionService {
   public get notion() {
     return this._notion;
   }
+
+  public get blocks() {
+    return this.notion.blocks;
+  }
+
+  public get databases() {
+    return this.notion.databases;
+  }
+
+  public get pages() {
+    return this.notion.pages;
+  }
+
+  public get request() {
+    return this.notion.request;
+  }
+
+  public get search() {
+    return this.notion.search;
+  }
+
+  public get users() {
+    return this.notion.users;
+  }
 }

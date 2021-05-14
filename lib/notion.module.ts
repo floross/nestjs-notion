@@ -14,7 +14,7 @@ import { mergeDefaults } from './utils';
 @Module({
   imports: [],
   providers: [NotionService],
-  exports: [],
+  exports: [NotionService],
 })
 export class NotionModule {
   static forRoot(options: NotionModuleOptions = {}): DynamicModule {
