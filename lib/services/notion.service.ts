@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger as NestjsLogger } from '@nestjs/common';
+import { Client, Logger as NotionLogger, LogLevel } from '@notionhq/client';
 import {
-  Client as NotionClient,
-  Logger as NotionLogger,
-  LogLevel,
-} from '@notionhq/client';
+  SearchParameters,
+  SearchResponse,
+} from '@notionhq/client/build/src/api-endpoints';
+import { RequestParameters } from '@notionhq/client/build/src/Client';
 
 import { NotionModuleOptions } from '../interfaces';
 import { NOTION_MODULE_OPTIONS } from '../notion.constants';
@@ -12,7 +13,7 @@ import { NOTION_MODULE_OPTIONS } from '../notion.constants';
 export class NotionService {
   private readonly logger = new NestjsLogger(NotionService.name);
 
-  protected _notion: NotionClient;
+  protected _notion: Client;
 
   constructor(
     @Inject(NOTION_MODULE_OPTIONS)
@@ -21,7 +22,7 @@ export class NotionService {
     const { nestjsLogger, ...notionOptions } = notionModuleOptions;
 
     const logger = nestjsLogger ?? this.logger;
-    this._notion = new NotionClient({
+    this._notion = new Client({
       logger: this.createLoggerBridge(logger),
       ...notionOptions,
     });
@@ -43,26 +44,40 @@ export class NotionService {
     return this.notion.pages;
   }
 
-  public get request() {
-    return this.notion.request;
+  public request<Response>(
+    requestParameters: RequestParameters,
+  ): Promise<Response> {
+    return this.notion.request(requestParameters);
   }
 
-  public get search() {
-    return this.notion.search;
+  public search(args: SearchParameters): Promise<SearchResponse> {
+    return this.notion.search(args);
   }
 
   public get users() {
     return this.notion.users;
   }
 
-  protected createLoggerBridge(nestjsLogger: NestjsLogger): NotionLogger {
+  protected createLoggerBridge(logger: NestjsLogger): NotionLogger {
     return (
       level: LogLevel,
       message: string,
       extraInfo: Record<string, unknown>,
     ) => {
-      nestjsLogger[level](message);
-      nestjsLogger.verbose(extraInfo);
+      switch (level) {
+        case LogLevel.DEBUG:
+        case LogLevel.WARN:
+        case LogLevel.ERROR:
+          logger[level](message);
+          break;
+        case LogLevel.INFO:
+          logger.log(message);
+          break;
+
+        default:
+          throw new Error(`notion log level not found`);
+      }
+      if (typeof extraInfo !== 'undefined') logger.verbose(extraInfo);
     };
   }
 }
